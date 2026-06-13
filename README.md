@@ -40,7 +40,7 @@ OK port=1 len=513
 ## Build
 
 ```sh
-/home/syspoe/.platformio/penv/bin/pio run
+~/.platformio/penv/bin/pio run
 ```
 
 The UF2 is expected at:
