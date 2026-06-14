@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	ports    = 4
+	ports    = 2
 	slots    = 512
 	frameLen = slots + 1
 )
@@ -130,7 +130,7 @@ func runCommand(serial io.ReadWriter, state *[ports]universe, line string) error
 
 func parseSet(args []string) (int, []byte, error) {
 	if len(args) == 0 {
-		return -1, nil, errors.New("usage: set [port 1-4] v1,v2,...")
+		return -1, nil, errors.New("usage: set [port 1-2] v1,v2,...")
 	}
 
 	port := -1
@@ -151,7 +151,7 @@ func parseSet(args []string) (int, []byte, error) {
 
 func parseSlot(args []string) (int, int, int, error) {
 	if len(args) != 3 {
-		return 0, 0, 0, errors.New("usage: slot <port 1-4> <slot 1-512> <value 0-255>")
+		return 0, 0, 0, errors.New("usage: slot <port 1-2> <slot 1-512> <value 0-255>")
 	}
 	port, err := parseRange(args[0], 1, ports, "port")
 	if err != nil {
