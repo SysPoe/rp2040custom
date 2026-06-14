@@ -10,7 +10,7 @@
 #define DMX_BAUD 250000u
 #define DMX_BREAK_US 176u
 #define DMX_MAB_US 32u
-#define DMX_MBB_US 10000u
+#define DMX_MBB_US 0u
 #define FRAME_MAGIC_0 0x44u
 #define FRAME_MAGIC_1 0x4du
 
@@ -39,26 +39,46 @@ static void dmx_port_init(DmxPort *port) {
     digitalWrite(port->en_pin, HIGH);
 }
 
-static void dmx_send_port(DmxPort *port) {
-    uart_tx_wait_blocking(port->uart);
-    uart_set_break(port->uart, true);
-    delayMicroseconds(DMX_BREAK_US);
-    uart_set_break(port->uart, false);
-    delayMicroseconds(DMX_MAB_US);
-
-    for (uint16_t slot = 0; slot < port->len; slot++) {
-        uart_putc_raw(port->uart, port->data[slot]);
-    }
-
-    uart_tx_wait_blocking(port->uart);
-}
-
 static void dmx_send_all_ports() {
     for (uint i = 0; i < DMX_PORTS; i++) {
-        dmx_send_port(&ports[i]);
+        uart_tx_wait_blocking(ports[i].uart);
+        uart_set_break(ports[i].uart, true);
     }
 
-    delayMicroseconds(DMX_MBB_US);
+    delayMicroseconds(DMX_BREAK_US);
+
+    for (uint i = 0; i < DMX_PORTS; i++) {
+        uart_set_break(ports[i].uart, false);
+    }
+
+    delayMicroseconds(DMX_MAB_US);
+
+    uint16_t pos[DMX_PORTS] = {0};
+    uint active_ports = DMX_PORTS;
+
+    while (active_ports > 0) {
+        for (uint i = 0; i < DMX_PORTS; i++) {
+            DmxPort *port = &ports[i];
+            while (pos[i] < port->len && uart_is_writable(port->uart)) {
+                uart_putc_raw(port->uart, port->data[pos[i]++]);
+            }
+        }
+
+        active_ports = 0;
+        for (uint i = 0; i < DMX_PORTS; i++) {
+            if (pos[i] < ports[i].len) {
+                active_ports++;
+            }
+        }
+    }
+
+    for (uint i = 0; i < DMX_PORTS; i++) {
+        uart_tx_wait_blocking(ports[i].uart);
+    }
+
+    if (DMX_MBB_US > 0) {
+        delayMicroseconds(DMX_MBB_US);
+    }
 }
 
 static void handle_usb_frames() {
