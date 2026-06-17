@@ -43,7 +43,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "initial send: %v\n", err)
 		os.Exit(1)
 	}
-	printEcho(serial)
 
 	fmt.Printf("connected to %s at %d baud\n", *portName, *baud)
 	printHelp()
@@ -89,7 +88,6 @@ func runCommand(serial io.ReadWriter, state *[ports]universe, line string) error
 		if err := sendAll(serial, state); err != nil {
 			return err
 		}
-		printEcho(serial)
 	case "set":
 		port, values, err := parseSet(fields[1:])
 		if err != nil {
@@ -102,14 +100,12 @@ func runCommand(serial io.ReadWriter, state *[ports]universe, line string) error
 			if err := sendAll(serial, state); err != nil {
 				return err
 			}
-			printEcho(serial)
 			return nil
 		}
 		applyValues(&state[port], values)
 		if err := sendPort(serial, port, state[port][:]); err != nil {
 			return err
 		}
-		printEcho(serial)
 	case "slot":
 		port, slot, value, err := parseSlot(fields[1:])
 		if err != nil {
@@ -119,7 +115,6 @@ func runCommand(serial io.ReadWriter, state *[ports]universe, line string) error
 		if err := sendPort(serial, port, state[port][:]); err != nil {
 			return err
 		}
-		printEcho(serial)
 	case "show":
 		showState(state)
 	default:
@@ -243,18 +238,6 @@ func writeFull(w io.Writer, data []byte) error {
 		data = data[n:]
 	}
 	return nil
-}
-
-func printEcho(r io.Reader) {
-	buf := make([]byte, 1024)
-	n, err := r.Read(buf)
-	if err != nil || n == 0 {
-		return
-	}
-	text := strings.TrimRight(string(buf[:n]), "\r\n")
-	if text != "" {
-		fmt.Println(text)
-	}
 }
 
 func printHelp() {

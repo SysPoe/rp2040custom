@@ -129,11 +129,6 @@ static void handle_usb_frames() {
                 DmxPort *port = &ports[port_index];
                 memcpy(port->data, scratch, len);
                 port->len = len;
-                Serial.print("OK port=");
-                Serial.print(port_index + 1);
-                Serial.print(" len=");
-                Serial.print(len);
-                Serial.print("\r\n");
                 state = WAIT_MAGIC_0;
             }
             break;
